@@ -19,6 +19,7 @@ app/
   database.py
   estoque.py
   vendas.py
+  pdv.py
   nfce.py
   pagamentos.py
   comandas.py
@@ -39,6 +40,7 @@ templates/
 static/
   css/styles.css
   js/main.js
+  js/pdv.js
 ```
 
 ## Instalação e execução
@@ -89,10 +91,19 @@ static/
 - Alerta de estoque baixo (`< 10 unidades`) exibido no dashboard.
 
 ### Vendas, PDV e promoções
+- Página **PDV** (`/pdv`): layout estilo frente de caixa com entrada focada para leitores de código de barras (tratados como teclado), tabela dinâmica de itens, totalizador em tempo real e botões para finalizar venda ou emitir NFC-e imediatamente.
+- Funções REST do PDV: `GET /pdv/session`, `POST /pdv/add-item`, `POST /pdv/update-item`, `POST /pdv/remove-item`, `POST /pdv/finalizar-venda` (gera venda, registra pagamento e pode emitir NFC-e).
 - Página **Vendas**: modal para registrar vendas com múltiplos itens.
 - Promoção automática: 10% de desconto em compras acima de R$ 100.
 - Formas de pagamento: dinheiro, cartão, PIX (gera QR Code).
 - Relatórios diários com Chart.js (ticket médio, produtos mais vendidos, vendas por hora).
+
+### PDV web (scanner e finalização)
+- Campo de código fica em foco automático e aceita leitura de scanners USB/HID (evento `Enter` dispara busca do produto).
+- Tabela exibe colunas N°, Código, Produto, Quantidade, Valor, Desconto e Total, com botões para atualizar/remover itens.
+- Totalizador lateral mostra subtotal, descontos acumulados, quantidade total e total final da venda.
+- Formulário de finalização permite escolher forma de pagamento (dinheiro/cartão/PIX), marcar contingência SVRS e emitir NFC-e imediatamente.
+- Após finalizar, uma nova sessão do PDV é criada automaticamente para acelerar o próximo atendimento.
 
 ### Finanças
 - Controle de contas a pagar/receber (`accounts_payable`, `accounts_receivable`).
@@ -139,6 +150,24 @@ curl -X POST http://localhost:5000/produtos \
         "cfop": "5102",
         "icms_aliquota": 18
       }'
+```
+
+### Fluxo PDV (REST)
+```bash
+# Adicionar item pelo código
+curl -X POST http://localhost:5000/pdv/add-item \
+  -H 'Content-Type: application/json' \
+  -d '{"code": "CAFE001", "quantity": 1}'
+
+# Atualizar quantidade/desconto de um item temporário
+curl -X POST http://localhost:5000/pdv/update-item \
+  -H 'Content-Type: application/json' \
+  -d '{"session_id": 1, "item_id": 2, "quantity": 3, "discount": 1.50}'
+
+# Finalizar a venda e emitir NFC-e
+curl -X POST http://localhost:5000/pdv/finalizar-venda \
+  -H 'Content-Type: application/json' \
+  -d '{"session_id": 1, "payment_method": "pix", "emitir_nfce": true}'
 ```
 
 ### Registrar venda e emitir NFC-e
@@ -194,6 +223,7 @@ curl -X POST http://localhost:5000/importar-pedido-ifood \
 - Automação de testes (`pytest`, `pytest-flask`).
 - Motor de promoções avançado e fidelidade.
 - Monitor fiscal 2025/2026 (API mock já prevista em `config_fiscal`).
+- Integração com leitores de código de barras USB/serial com configuração de prefixo/sufixo.
 
 ## Licença
 Uso interno para MVP. Ajuste conforme necessidades do cliente.

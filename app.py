@@ -19,7 +19,7 @@ from flask import (
     url_for,
 )
 
-from app import clientes, comandas, database, estoque, financas, nfce, pagamentos, relatorios, vendas
+from app import clientes, comandas, database, estoque, financas, nfce, pagamentos, pdv, relatorios, vendas
 from app.config_fiscal import supported_states
 from app.security import authenticate, create_user, has_role
 from app.utils import log_audit
@@ -173,6 +173,151 @@ def manage_sales():
         flash(f"Venda registrada #{sale_id}", "success")
         return redirect(url_for("manage_sales"))
     return render_template("sales.html", sales=vendas.list_sales())
+
+
+@app.route("/pdv")
+@require_role({"admin", "caixa", "gerente"})
+def pdv_view():
+    user = session.get("user")
+    user_id = user.get("id") if user else None
+    existing_session_id = session.get("pdv_session_id")
+    pdv_session_data = pdv.get_or_create_session(user_id=user_id, session_id=existing_session_id)
+    session["pdv_session_id"] = pdv_session_data["id"]
+    payload = pdv.session_payload(pdv_session_data["id"])
+    return render_template(
+        "pdv.html",
+        pdv_session=payload["session"],
+        items=payload["items"],
+        totals=payload["totals"],
+    )
+
+
+@app.route("/pdv/produto/<string:code>")
+@require_role({"admin", "caixa", "gerente"})
+def pdv_product_lookup(code: str):
+    product = estoque.get_product_by_code(code)
+    if not product:
+        return jsonify({"error": "Produto não encontrado"}), 404
+    return jsonify(product)
+
+
+def _resolve_pdv_session(session_id: int | None) -> Dict[str, Any]:
+    if not session_id:
+        raise ValueError("Sessão do PDV não encontrada")
+    session_data = pdv.get_session(session_id)
+    if not session_data or session_data.get("status") != "aberta":
+        raise ValueError("Sessão do PDV inválida")
+    return session_data
+
+
+@app.route("/pdv/session", methods=["GET"])
+@require_role({"admin", "caixa", "gerente"})
+def pdv_session_state():
+    user = session.get("user")
+    user_id = user.get("id") if user else None
+    requested_id = request.args.get("session_id", type=int) or session.get("pdv_session_id")
+    pdv_session_data = pdv.get_or_create_session(user_id=user_id, session_id=requested_id)
+    session["pdv_session_id"] = pdv_session_data["id"]
+    return jsonify(pdv.session_payload(pdv_session_data["id"]))
+
+
+@app.route("/pdv/add-item", methods=["POST"])
+@require_role({"admin", "caixa", "gerente"})
+def pdv_add_item():
+    payload = request.get_json(force=True)
+    code = str(payload.get("code", "")).strip()
+    if not code:
+        return jsonify({"error": "Informe o código do produto"}), 400
+    quantity = int(payload.get("quantity", 1))
+    discount_value = payload.get("discount")
+    discount = float(discount_value) if discount_value is not None else None
+    user = session.get("user")
+    user_id = user.get("id") if user else None
+    requested_id = payload.get("session_id") or session.get("pdv_session_id")
+    pdv_session_data = pdv.get_or_create_session(user_id=user_id, session_id=requested_id)
+    try:
+        pdv.add_item_by_code(pdv_session_data["id"], code, quantity, discount)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    session["pdv_session_id"] = pdv_session_data["id"]
+    return jsonify(pdv.session_payload(pdv_session_data["id"]))
+
+
+@app.route("/pdv/update-item", methods=["POST"])
+@require_role({"admin", "caixa", "gerente"})
+def pdv_update_item_route():
+    payload = request.get_json(force=True)
+    session_id = payload.get("session_id") or session.get("pdv_session_id")
+    item_id = payload.get("item_id")
+    if not item_id:
+        return jsonify({"error": "Item inválido"}), 400
+    quantity = int(payload.get("quantity", 1))
+    discount_value = payload.get("discount")
+    discount = float(discount_value) if discount_value is not None else None
+    try:
+        session_data = _resolve_pdv_session(int(session_id))
+        pdv.update_item(session_data["id"], int(item_id), quantity, discount)
+    except (ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(pdv.session_payload(session_data["id"]))
+
+
+@app.route("/pdv/remove-item", methods=["POST"])
+@require_role({"admin", "caixa", "gerente"})
+def pdv_remove_item_route():
+    payload = request.get_json(force=True)
+    session_id = payload.get("session_id") or session.get("pdv_session_id")
+    item_id = payload.get("item_id")
+    try:
+        session_data = _resolve_pdv_session(int(session_id))
+        pdv.remove_item(session_data["id"], int(item_id))
+    except (ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(pdv.session_payload(session_data["id"]))
+
+
+@app.route("/pdv/finalizar-venda", methods=["POST"])
+@require_role({"admin", "caixa", "gerente"})
+def pdv_finalize_sale():
+    payload = request.get_json(force=True)
+    session_id = payload.get("session_id") or session.get("pdv_session_id")
+    payment_method = payload.get("payment_method", "dinheiro")
+    emitir_nfce = bool(payload.get("emitir_nfce"))
+    contingencia = bool(payload.get("contingencia"))
+    customer_id = payload.get("customer_id")
+    try:
+        session_data = _resolve_pdv_session(int(session_id))
+    except (ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    sale_items = pdv.prepare_sale_items(session_data["id"])
+    if not sale_items:
+        return jsonify({"error": "Adicione itens antes de finalizar a venda"}), 400
+
+    sale_id = vendas.register_sale(
+        sale_items,
+        payment_method,
+        customer_id=int(customer_id) if customer_id else None,
+        channel="pdv",
+    )
+    totals = pdv.finalize_session(session_data["id"], sale_id, payment_method)
+
+    result: Dict[str, Any] = {
+        "sale_id": sale_id,
+        "totals": totals,
+        "message": f"Venda #{sale_id} registrada",
+    }
+
+    if emitir_nfce:
+        result["nfce"] = nfce.emitir_nfce(sale_id, contingencia=contingencia)
+
+    user = session.get("user")
+    user_id = user.get("id") if user else None
+    nova_sessao = pdv.create_session(user_id)
+    session["pdv_session_id"] = nova_sessao["id"]
+    result["next_session"] = pdv.session_payload(nova_sessao["id"])
+
+    return jsonify(result), 201
 
 
 @app.route("/emitir-nfce", methods=["POST"])

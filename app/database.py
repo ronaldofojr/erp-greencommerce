@@ -127,6 +127,39 @@ TABLE_DEFINITIONS: Iterable[str] = [
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS pdv_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        status TEXT DEFAULT 'aberta',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        closed_at TEXT,
+        total REAL DEFAULT 0,
+        discount REAL DEFAULT 0,
+        payment_method TEXT,
+        sale_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (sale_id) REFERENCES sales(id)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS pdv_session_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        product_code TEXT,
+        product_name TEXT,
+        quantity INTEGER NOT NULL,
+        unit_price REAL NOT NULL,
+        discount REAL DEFAULT 0,
+        total REAL NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES pdv_sessions(id),
+        FOREIGN KEY (product_id) REFERENCES products(id)
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS payments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sale_id INTEGER,

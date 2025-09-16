@@ -24,6 +24,16 @@ def get_product(product_id: int) -> Optional[Product]:
         return dict(row) if row else None
 
 
+def get_product_by_code(code: str) -> Optional[Product]:
+    """Return a product by its unique code."""
+    if not code:
+        return None
+    with database.get_connection() as conn:
+        cursor = conn.execute("SELECT * FROM products WHERE code = ?", (code.strip(),))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
 def create_product(data: Dict[str, Optional[str]]) -> int:
     """Insert a new product and return its ID."""
     required_fields = ["name", "code", "price", "quantity"]
@@ -117,6 +127,7 @@ def low_stock_alerts(threshold: int = 10) -> Iterable[Product]:
 __all__ = [
     "list_products",
     "get_product",
+    "get_product_by_code",
     "create_product",
     "update_product",
     "update_stock",
