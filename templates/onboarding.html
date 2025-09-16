@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Wizard de Configuração Fiscal</h2>
+<form method="post" class="card card-body shadow-sm">
+  <div class="row g-3">
+    <div class="col-12">
+      <h5>1. Dados do Emitente</h5>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Razão Social</label>
+      <input class="form-control" name="company_name" value="{{ config.company_name }}" required />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">CNPJ</label>
+      <input class="form-control" name="cnpj" value="{{ config.cnpj }}" required />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Inscrição Estadual</label>
+      <input class="form-control" name="ie" value="{{ config.ie }}" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">CSC ID</label>
+      <input class="form-control" name="csc_id" value="{{ config.csc_id }}" />
+    </div>
+    <div class="col-md-8">
+      <label class="form-label">CSC Token</label>
+      <input class="form-control" name="csc_token" value="{{ config.csc_token }}" />
+    </div>
+    <div class="col-12 pt-3">
+      <h5>2. Certificado Digital A1</h5>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Caminho do Certificado (.pfx)</label>
+      <input class="form-control" name="certificate_path" value="{{ config.certificate_path }}" placeholder="/path/certificado.pfx" />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Senha do Certificado</label>
+      <input class="form-control" name="certificate_password" value="{{ config.certificate_password }}" type="password" />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Ambiente</label>
+      <select class="form-select" name="ambiente">
+        <option value="homologacao" {% if config.ambiente == 'homologacao' %}selected{% endif %}>Homologação</option>
+        <option value="producao" {% if config.ambiente == 'producao' %}selected{% endif %}>Produção</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">UF Padrão</label>
+      <select class="form-select" name="uf">
+        {% for sigla, estado in estados.items() %}
+          <option value="{{ sigla }}" {% if config.uf == sigla %}selected{% endif %}>{{ sigla }} - {{ estado.autorizador }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">E-mail DANFE</label>
+      <input class="form-control" name="email_danfe" value="{{ config.email_danfe }}" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Webhook (URL)</label>
+      <input class="form-control" name="webhook_url" value="{{ config.webhook_url }}" placeholder="https://exemplo.com/webhook" />
+    </div>
+  </div>
+  <button class="btn btn-primary mt-4" type="submit">Salvar Configurações</button>
+  <p class="mt-2 text-muted small">Dica: finalize homologação na SEFAZ-RJ antes de ir para produção. Atualizações fiscais futuras podem ser aplicadas via API.</p>
+</form>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Clientes</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCliente">Novo Cliente</button>
+</div>
+<div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>CPF</th>
+        <th>Contato</th>
+        <th>LGPD</th>
+        <th>Criado em</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cliente in customers %}
+        <tr>
+          <td>{{ cliente.name }}</td>
+          <td>{{ cliente.cpf or '—' }}</td>
+          <td>{{ cliente.contact or '—' }}</td>
+          <td>{% if cliente.accepts_lgpd %}<span class="badge bg-success">Autorizado</span>{% else %}<span class="badge bg-secondary">Restrito</span>{% endif %}</td>
+          <td>{{ cliente.created_at }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="text-center text-muted">Nenhum cliente cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="modalCliente" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post">
+      <div class="modal-header">
+        <h5 class="modal-title">Cadastrar Cliente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Nome</label>
+          <input class="form-control" name="name" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">CPF (opcional)</label>
+          <input class="form-control" name="cpf" placeholder="000.000.000-00" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Contato</label>
+          <input class="form-control" name="contact" />
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="1" name="accepts_lgpd" id="lgpdCheck" />
+          <label class="form-check-label" for="lgpdCheck">
+            Autorizo o uso dos dados para emissão de NFC-e conforme LGPD.
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

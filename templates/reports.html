@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Relatórios de Vendas</h2>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Quantidade</h6>
+        <h3>{{ analytics.resumo.quantidade }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Faturamento</h6>
+        <h3>R$ {{ analytics.resumo.faturamento|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Ticket Médio</h6>
+        <h3>R$ {{ analytics.resumo.ticket_medio|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">Produtos mais vendidos</div>
+      <div class="card-body">
+        <canvas id="chartProdutos" data-labels='{{ analytics.produtos|map(attribute="name")|list|tojson }}' data-values='{{ analytics.produtos|map(attribute="quantidade_vendida")|list|tojson }}'></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">Fluxo horário</div>
+      <div class="card-body">
+        <canvas id="chartHoras" data-labels='{{ analytics.por_hora|map(attribute="hora")|list|tojson }}' data-values='{{ analytics.por_hora|map(attribute="total")|list|tojson }}'></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-4 d-flex gap-2">
+  <a class="btn btn-outline-secondary" href="{{ url_for('relatorios_sped') }}">Exportar SPED (txt)</a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('backup_nfce') }}">Listar XMLs</a>
+</div>
+{% endblock %}
