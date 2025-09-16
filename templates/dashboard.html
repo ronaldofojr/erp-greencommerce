@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="mb-4">Visão Geral</h1>
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Vendas Hoje</h6>
+        <h3>R$ {{ resumo.faturamento|default(0)|round(2) }}</h3>
+        <small>{{ resumo.quantidade }} vendas</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Ticket Médio</h6>
+        <h3>R$ {{ resumo.ticket_medio|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Saldo Estimado</h6>
+        <h3>R$ {{ fluxo.saldo_estimado|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted">Recebimentos Confirmados</h6>
+        <h3>R$ {{ fluxo.entradas_confirmadas|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">Produtos mais vendidos</div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          {% for produto in produtos %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ produto.name }}
+              <span class="badge bg-primary rounded-pill">{{ produto.quantidade_vendida }}</span>
+            </li>
+          {% else %}
+            <p class="text-muted">Sem vendas ainda.</p>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">Vendas por hora</div>
+      <div class="card-body">
+        <canvas id="chartVendasHora" data-labels='{{ por_hora|map(attribute="hora")|list|tojson }}' data-values='{{ por_hora|map(attribute="total")|list|tojson }}'></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header">Alertas de estoque baixo</div>
+      <div class="card-body">
+        {% if low_stock %}
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Quantidade</th>
+                  <th>NCM</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in low_stock %}
+                  <tr>
+                    <td>{{ item.name }}</td>
+                    <td><span class="badge bg-danger">{{ item.quantity }}</span></td>
+                    <td>{{ item.ncm }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">Nenhum alerta de estoque no momento.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
