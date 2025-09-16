@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Vendas e PDV</h2>
+  <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalVenda">Registrar Venda</button>
+</div>
+<div class="table-responsive">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Data</th>
+        <th>Total</th>
+        <th>Pagamento</th>
+        <th>Status</th>
+        <th>Cliente</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for venda in sales %}
+        <tr>
+          <td>{{ venda.id }}</td>
+          <td>{{ venda.created_at }}</td>
+          <td>R$ {{ venda.total }}</td>
+          <td>{{ venda.payment_method }}</td>
+          <td><span class="badge bg-info">{{ venda.status }}</span></td>
+          <td>{{ venda.customer_name or '-' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="text-center text-muted">Nenhuma venda registrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="modalVenda" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" method="post">
+      <div class="modal-header">
+        <h5 class="modal-title">Registrar Venda</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="channel" value="pdv" />
+        <div id="itemsContainer" class="mb-3">
+          <div class="row g-2 align-items-end item-row">
+            <div class="col-md-4">
+              <label class="form-label">Produto ID</label>
+              <input class="form-control" name="items[0][product_id]" required />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Quantidade</label>
+              <input class="form-control" type="number" min="1" name="items[0][quantity]" value="1" required />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Preço Unitário</label>
+              <input class="form-control" type="number" step="0.01" min="0" name="items[0][unit_price]" required />
+            </div>
+            <div class="col-md-2 text-end">
+              <button class="btn btn-outline-danger remove-item" type="button">Remover</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-outline-primary" id="addItem" type="button">Adicionar Item</button>
+        <hr />
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Forma de Pagamento</label>
+            <select class="form-select" name="payment_method">
+              <option value="dinheiro">Dinheiro</option>
+              <option value="cartao">Cartão</option>
+              <option value="pix">PIX</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Cliente (ID opcional)</label>
+            <input class="form-control" name="customer_id" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Mesa/Comanda</label>
+            <input class="form-control" name="table_id" />
+          </div>
+        </div>
+        <p class="mt-3 small text-muted">Promoção automática: 10% off em compras acima de R$ 100.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+        <button class="btn btn-success" type="submit">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

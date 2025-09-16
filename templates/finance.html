@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Fluxo de Caixa</h2>
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Entradas confirmadas</h6>
+        <h3>R$ {{ resumo.entradas_confirmadas|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Receber em aberto</h6>
+        <h3>R$ {{ resumo.receber_em_aberto|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Pagar em aberto</h6>
+        <h3>R$ {{ resumo.pagar_em_aberto|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Saldo projetado</h6>
+        <h3>R$ {{ resumo.saldo_estimado|round(2) }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header">Últimos recebimentos/pagamentos</div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Valor</th>
+            <th>Origem</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lancamento in detalhado %}
+            <tr>
+              <td>{{ lancamento.data }}</td>
+              <td>R$ {{ lancamento.valor }}</td>
+              <td>{{ lancamento.origem }}</td>
+              <td>{{ lancamento.status }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-center text-muted">Sem lançamentos.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

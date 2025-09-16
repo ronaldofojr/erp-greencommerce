@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Produtos</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProduto">Novo Produto</button>
+</div>
+<div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Preço</th>
+        <th>Quantidade</th>
+        <th>NCM</th>
+        <th>CFOP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for produto in products %}
+        <tr>
+          <td>{{ produto.code }}</td>
+          <td>{{ produto.name }}</td>
+          <td>R$ {{ produto.price }}</td>
+          <td>{{ produto.quantity }}</td>
+          <td>{{ produto.ncm }}</td>
+          <td>{{ produto.cfop }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="text-center text-muted">Cadastre seus produtos para começar</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="modalProduto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" method="post">
+      <div class="modal-header">
+        <h5 class="modal-title">Cadastrar Produto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Nome</label>
+            <input class="form-control" name="name" required />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Código (SKU)</label>
+            <input class="form-control" name="code" required />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Categoria</label>
+            <input class="form-control" name="category" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Preço</label>
+            <input class="form-control" type="number" min="0" step="0.01" name="price" required />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Quantidade</label>
+            <input class="form-control" type="number" min="0" name="quantity" required />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">NCM</label>
+            <input class="form-control" name="ncm" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">CEST</label>
+            <input class="form-control" name="cest" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">CFOP</label>
+            <input class="form-control" name="cfop" value="5102" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Alíquota ICMS (%)</label>
+            <input class="form-control" type="number" min="0" step="0.01" name="icms_aliquota" value="18" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
